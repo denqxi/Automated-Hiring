@@ -133,21 +133,14 @@ if os.path.exists(sidebar_logo):
             unsafe_allow_html=True
         )
 
-st.sidebar.markdown("### System Configuration")
-model_choice = st.sidebar.selectbox(
-    "Active Intelligence Model",
-    ["Logistic Regression", "Random Forest"],
-    help="Select the AI architecture to power the screening prediction."
-)
-
+# Sidebar UI configuration
+model_choice = "Random Forest"
 model_paths = {
-    "Logistic Regression": "logistic_regression_pipeline.pkl",
     "Random Forest": "random_forest_pipeline.pkl"
 }
 
 model_accuracies = {
-    "Logistic Regression": 0.9063,
-    "Random Forest": 0.9010
+    "Random Forest": 0.8980
 }
 
 st.sidebar.markdown("---")
@@ -187,16 +180,16 @@ col1, col2 = st.columns(2, gap="large")
 with col1:
     st.markdown("#### Primary Qualifications")
     years_experience = st.number_input(
-        "Foundational Experience (Years)", 
+        "Years of Experience", 
         min_value=0.0, max_value=50.0, value=5.0, step=0.5,
         help="The total number of years of relevant industry experience documented in the resume."
     )
     skills_match_score = st.slider(
-        "Technical Skills Alignment (%)", 0, 100, 80,
+        "Skills Match Score", 0, 100, 80,
         help="Percentage match between candidate skills and the specific job requirements."
     )
     project_count = st.number_input(
-        "Documented Project Count", 
+        "Project Count", 
         min_value=0, max_value=100, value=3,
         help="Total number of discrete projects or major initiatives highlighted in the portfolio."
     )
@@ -204,16 +197,16 @@ with col1:
 with col2:
     st.markdown("#### Holistic Metrics")
     resume_length = st.number_input(
-        "Document Volume (Characters)", 
+        "Resume Length", 
         min_value=0, max_value=20000, value=1500,
         help="The raw character count of the resume document, used as a proxy for detail level."
     )
     github_activity = st.slider(
-        "Open Source Contribution Score", 0, 100, 70,
+        "GitHub Activity", 0, 100, 70,
         help="Calculated activity level based on GitHub commits, PRs, and repository engagement."
     )
     education_level = st.selectbox(
-        "Highest Credential Attained",
+        "Education Level",
         ["Bachelors", "Masters", "PhD", "High School"],
         help="Select the candidate's highest level of formal education."
     )

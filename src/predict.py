@@ -56,23 +56,16 @@ def main():
     args = parser.parse_args()
 
     model_path = args.model
-    model_label = ""
-    model_accuracy = None
+    model_label = "Random Forest"
+    model_accuracy = 0.8980
     if not model_path:
-        print("Select model:")
-        print("1) Logistic Regression")
-        print("2) Random Forest")
-        choice = input("Enter choice (1/2): ").strip()
-        if choice == "1":
-            model_path = r"C:\Users\User\Downloads\IT20\logistic_regression_pipeline.pkl"
-            model_label = "Logistic Regression"
-            model_accuracy = 0.9063
-        elif choice == "2":
-            model_path = r"C:\Users\User\Downloads\IT20\random_forest_pipeline.pkl"
-            model_label = "Random Forest"
-            model_accuracy = 0.901
-        else:
-            print("Invalid choice.", file=sys.stderr)
+        model_path = r"C:\Users\User\Downloads\IT20\models\random_forest_pipeline.pkl"
+    
+    if not os.path.exists(model_path):
+        # Fallback to current directory if full path fails
+        model_path = "random_forest_pipeline.pkl"
+        if not os.path.exists(model_path):
+            print(f"Error: Model file not found.", file=sys.stderr)
             return 2
     education_value = "Bachelors"
 
