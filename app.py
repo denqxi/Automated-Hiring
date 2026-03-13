@@ -3,6 +3,8 @@ import pandas as pd
 import joblib
 import pickle
 import os
+import sqlite3
+from datetime import datetime
 from PIL import Image
 
 # Set page config for a professional corporate look
@@ -12,6 +14,56 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded",
 )
+
+# Database Setup
+DB_FILE = "assessments.db"
+
+def init_db():
+    conn = sqlite3.connect(DB_FILE)
+    c = conn.cursor()
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS assessments (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            timestamp TEXT,
+            years_experience REAL,
+            skills_match_score INTEGER,
+            project_count INTEGER,
+            resume_length INTEGER,
+            github_activity INTEGER,
+            education_level TEXT,
+            model_used TEXT,
+            prediction TEXT,
+            probability REAL
+        )
+    ''')
+    conn.commit()
+    conn.close()
+
+def save_assessment(data):
+    conn = sqlite3.connect(DB_FILE)
+    c = conn.cursor()
+    c.execute('''
+        INSERT INTO assessments (
+            timestamp, years_experience, skills_match_score, project_count, 
+            resume_length, github_activity, education_level, 
+            model_used, prediction, probability
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ''', (
+        datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        data['years_experience'],
+        data['skills_match_score'],
+        data['project_count'],
+        data['resume_length'],
+        data['github_activity'],
+        data['education_level'],
+        data['model_used'],
+        data['prediction'],
+        data['probability']
+    ))
+    conn.commit()
+    conn.close()
+
+init_db()
 
 # Professional CSS styling for Enterprise Dashboard
 st.markdown("""
@@ -174,8 +226,11 @@ else:
 st.markdown("---")
 
 # Dashboard Layout
-st.subheader("Candidate Assessment Parameters")
-col1, col2 = st.columns(2, gap="large")
+tabs = st.tabs(["New Assessment", "Assessment History"])
+
+with tabs[0]:
+    st.subheader("Candidate Assessment Parameters")
+    col1, col2 = st.columns(2, gap="large")
 
 with col1:
     st.markdown("#### Primary Qualifications")
@@ -254,6 +309,19 @@ if st.button("Initiate Predictive Analysis"):
         # Persistent Results Section
         is_shortlisted = prediction in [1, "Yes", True]
         status_text = "SHORTLISTED" if is_shortlisted else "REJECTED"
+        
+        # Save to database
+        save_assessment({
+            "years_experience": years_experience,
+            "skills_match_score": skills_match_score,
+            "project_count": project_count,
+            "resume_length": resume_length,
+            "github_activity": github_activity,
+            "education_level": education_level,
+            "model_used": model_choice,
+            "prediction": status_text,
+            "probability": float(probability) if probability is not None else None
+        })
         status_color = "#059669" if is_shortlisted else "#dc2626"
         
         st.markdown(f"""
@@ -277,6 +345,64 @@ if st.button("Initiate Predictive Analysis"):
             </div>
         </div>
         """, unsafe_allow_html=True)
+
+    # Added: Recent Evaluations shortcut on main page
+    st.markdown("<div style='margin-top: 4rem;'></div>", unsafe_allow_html=True)
+    st.subheader("Recent Evaluations")
+    try:
+        conn = sqlite3.connect(DB_FILE)
+        df_recent = pd.read_sql_query("SELECT timestamp, education_level, prediction FROM assessments ORDER BY id DESC LIMIT 3", conn)
+        conn.close()
+        if not df_recent.empty:
+            st.table(df_recent)
+            st.caption("Go to 'Assessment History' tab for full details.")
+    except:
+        pass
+
+with tabs[1]:
+    st.subheader("Historical Assessment Data")
+    try:
+        conn = sqlite3.connect(DB_FILE)
+        df_history = pd.read_sql_query("SELECT * FROM assessments ORDER BY id DESC", conn)
+        conn.close()
+        
+        if df_history.empty:
+            st.info("No assessments recorded yet. Initiate an analysis to see history.")
+        else:
+            # Metrics Summary
+            m_col1, m_col2, m_col3 = st.columns(3)
+            total_screened = len(df_history)
+            shortlist_count = len(df_history[df_history['prediction'] == 'SHORTLISTED'])
+            shortlist_rate = shortlist_count / total_screened if total_screened > 0 else 0
+            avg_exp = df_history['years_experience'].mean()
+            
+            m_col1.metric("Total Candidates Screened", total_screened)
+            m_col2.metric("Shortlist Rate", f"{shortlist_rate:.1%}")
+            m_col3.metric("Avg. Experience", f"{avg_exp:.1f} yrs")
+            
+            st.markdown("---")
+            
+            # Drop the internal ID for display
+            display_df = df_history.drop(columns=['id'])
+            st.dataframe(
+                display_df,
+                column_config={
+                    "timestamp": "Time",
+                    "years_experience": "Exp (Yrs)",
+                    "skills_match_score": "Skills %",
+                    "project_count": "Projects",
+                    "resume_length": "Length",
+                    "github_activity": "GitHub",
+                    "education_level": "Education",
+                    "model_used": "Model",
+                    "prediction": "Result",
+                    "probability": st.column_config.NumberColumn("Match Prob", format="%.2f")
+                },
+                hide_index=True,
+                use_container_width=True
+            )
+    except Exception as e:
+        st.error(f"Error loading history: {e}")
 
 st.sidebar.markdown("---")
 
