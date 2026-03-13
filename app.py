@@ -201,8 +201,9 @@ with col2:
         min_value=0, max_value=20000, value=1500,
         help="The raw character count of the resume document, used as a proxy for detail level."
     )
-    github_activity = st.slider(
-        "GitHub Activity", 0, 100, 70,
+    github_activity = st.number_input(
+        "GitHub Activity", 
+        min_value=0, max_value=10000, value=70,
         help="Calculated activity level based on GitHub commits, PRs, and repository engagement."
     )
     education_level = st.selectbox(
@@ -264,8 +265,9 @@ if st.button("Initiate Predictive Analysis"):
                     <div style="color: #94a3b8; font-size: 0.85rem; margin-top: 1rem;">Based on multidimensional algorithmic screening of provided parameters.</div>
                 </div>
                 <div style="border-left: 1px solid #f1f5f9; padding-left: 2rem;">
-                    <div style="color: #64748b; font-weight: 700; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.5rem;">Intelligence Confidence</div>
+                    <div style="color: #64748b; font-weight: 700; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.5rem;">Candidate Match Probability</div>
                     <div style='font-size: 3.5rem; font-weight: 900; color: #0f172a; line-height: 1;'>{f"{probability:.1%}" if probability is not None else "N/A"}</div>
+                    <div style="color: #94a3b8; font-size: 0.85rem; margin-top: 1rem;">Likelihood that this candidate matches your enterprise hiring criteria.</div>
                     <div style="margin-top: 1.5rem;">
                         <div style="height: 10px; background-color: #f1f5f9; border-radius: 5px; overflow: hidden;">
                             <div style="width: {(probability*100) if probability is not None else 0}%; height: 100%; background-color: #0f172a;"></div>
